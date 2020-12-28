@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:context="http://www.springframework.org/schema/context" xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+    <!-- 配置 spring 创建容器时要扫描的包 -->
+    <context:component-scan base-package="com.obtk"  use-default-filters="false">
+        <!-- 制定扫包规则,不扫描@Controller注解的Java类,其他的会被扫描 -->
+        <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+    </context:component-scan>
+
+    <!-- MyBatis与Spring整合-->
+    <!-- 导入数据文件 -->
+    <context:property-placeholder location="classpath:db.properties"></context:property-placeholder>
+    <!-- 1.配置c3pO连接池 -->
+    <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+        <property name="driverClass" value="${mysqldriver}"/>
+        <property name="jdbcUrl" value="${mysqlurl}"/>
+        <property name="user" value="${mysqlusername}"/>
+        <property name="password" value="${mysqlpassword}"/>
+    </bean>
+
+    <!-- 2.配置SqlSessionFactory工厂(相当于IoC容器有了SqlSessionFactory工厂,SqlSessionFactory工厂
+           就可以创建SqlSession对象,有了SqlSession对象就能得到代理对象,然后把生成的代理对象存入到
+           IOC容器当中) -->
+
+    <!--
+        MyBatis:  org.mybatis.spring.SqlSessionFactoryBean
+        MyBatis-Plus:  com.baomidou.mybatisplus.extension.spring.MybatisSqlSessionFactoryBean
+    -->
+    <bean id="sqlSessionFactory" class="com.baomidou.mybatisplus.extension.spring.MybatisSqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource"/>
+        <property name="typeAliasesPackage" value="com.obtk.sms.po,com.obtk.sms.vo"/>
+       <!-- <property name="configLocation" value="classpath:mybatisConfig.xml"/>-->
+        <property name="mapperLocations">
+            <list>
+                <value>classpath:mapper/*.xml</value>
+            </list>
+        </property>
+
+        <!-- 配置分页插件 pagehelper -->
+        <property name="plugins">
+            <array>
+                <bean class="com.github.pagehelper.PageHelper">
+                    <property name="properties">
+                        <!-- 使用下面的方式配置参数,一行配置一个 -->
+                        <value>params=value1</value>
+                    </property>
+                </bean>
+            </array>
+        </property>
+    </bean>
+
+    <!-- 3.配置dao包中的接口,Spring容器会帮我们生成接口代理对象,存入容器 -->
+    <bean id="mapperScanner" class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="com.obtk"/>
+    </bean>
+
+
+     <!--&lt;!&ndash;定义事务&ndash;&gt;-->
+      <!--&lt;!&ndash;第一步:定义具体的平台事务管理器(datasource事务管理器)&ndash;&gt;-->
+    <!--<bean class="org.springframework.jdbc.datasource.DataSourceTransactionManager" id="transaction">-->
+        <!--&lt;!&ndash;注入数据源&ndash;&gt;-->
+        <!--<property name="dataSource" ref="dataSource"/>-->
+    <!--</bean>-->
+    <!--&lt;!&ndash;配置事务通知&ndash;&gt;-->
+    <!--<tx:advice transaction-manager="transaction" id="txAdvice">-->
+        <!--<tx:attributes>-->
+            <!--<tx:method name="find*" read-only="true"/>-->
+            <!--<tx:method name="add*"/>-->
+            <!--<tx:method name="edit*"/>-->
+            <!--<tx:method name="delete*"/>-->
+            <!--<tx:method name="counter*"/>-->
+            <!--<tx:method name="return*"/>-->
+            <!--<tx:method name="sell*"/>-->
+            <!--&lt;!&ndash;isolation:隔离级别 mysql 默认的是REPEATABLE-READ  可重复读&ndash;&gt;-->
+             <!--&lt;!&ndash;oracle:读已提交&ndash;&gt;-->
+            <!--<tx:method name="*" isolation="DEFAULT" propagation="REQUIRED"/>-->
+        <!--</tx:attributes>-->
+    <!--</tx:advice>-->
+    <!--&lt;!&ndash;配置aop的增强&ndash;&gt;-->
+    <!--<aop:config>-->
+        <!--<aop:advisor advice-ref="txAdvice" pointcut="execution(* com.obtk.sms.service.impl.*ServiceImpl.*(..))"/>-->
+    <!--</aop:config>-->
+
+</beans>
