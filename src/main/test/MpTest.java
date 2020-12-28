@@ -41,7 +41,6 @@ public class MpTest {
         employee.setE_age(21);
         int result = employeeMapper.insert(employee);
         System.out.println("result:"+result);
-        System.out.println("hhahah");
     }
 
 
